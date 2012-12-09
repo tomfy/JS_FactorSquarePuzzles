@@ -1,0 +1,6 @@
+Javascript interactive factor square puzzle. 
+You are presented with a blank puzzle, with
+none of its clues or answers displayed. You can click on
+a cell to display its clue. As you see more and more clues
+you can infer more of the answers. The idea is to complete
+the puzzle using the fewest clues.
