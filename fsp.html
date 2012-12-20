@@ -13,13 +13,13 @@
 
     <style type="text/css">
 
-      <!--
-	  * { margin: 0; padding: 0; }
-	  html, body { height: 100%; width: 100%; }
-	  canvas { display: block; }
-	-->
+      /*
+      * { margin: 0; padding: 0; }
+      html, body { height: 100%; width: 100%; }
+      canvas { display: block; }
+      */
 
-      <!-- Just a few examples of things you can (and should) do with css -->
+      /*   <!-- Just a few examples of things you can (and should) do with css --> */
       h1 {color:black;}
       h2 {color:black;}
       p {color:black;}
@@ -30,10 +30,65 @@
       #factor_square_table img {width:160px; height:200px; padding-bottom:0.5em;}
       body {word-wrap:break-word;}
 
+      input[type=text]{text-align: center;  position: absolute; background-color: transparent}
+      #htmlv {display: none}
+      .box {
+      display: inline-block;
+      border-top: 2px solid black;
+      border-left: 2px solid black;
+      width: 50px;
+      height: 50px;
+      margin: 0px;
+      vertical-align: bottom;
+      text-align: center
+      }
+      .center {
+      display: inline-block;
+      margin: auto auto auto auto;
+      vertical-align: middle;
+      }
     </style>
+    <div id="htmlv">
+      <div>
+	<div class="box"><span class="center">sddf</span></div>
+	<div class="box"><span class="center">123</span></div>
+	<div class="box"><span class="center">ABC</span></div>
+	<div class="box"></div>
+	<div class="box"></div>
+      </div>
+      <div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+      </div>
+      <div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+      </div>
+      <div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+      </div>
+      <div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+	<div class="box"></div>
+      </div>
+    </div>
 
 
-    <canvas id="the_canvas"  width="0" height="0" style="border:1px solid #000000;margin:80px;padding:0px">
+
+    <canvas id="the_canvas"  width="0" height="0" style="border: 1px solid ;margin:40px;padding:8px">
       Your browser does not support the HTML5 canvas tag.</canvas>
 
   </body>
