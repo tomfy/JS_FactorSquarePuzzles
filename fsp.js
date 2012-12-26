@@ -13,16 +13,7 @@ var n_steps = 0;
 
 function load(){
 
- //   if(dc){return}
-
     var canvas = document.getElementById("the_canvas");
-    
-   // canvas.width = 100;
-
-    //   ctx = canvas.getContext("2d");   
-    // ctx.font = font_size + "px Arial";
-    //  ctx.textAlign="center";
-    //   ctx.textBaseline="middle";
 
     var factors = [2,3,4,5,6,7,8,9,10]; //[1,2,2,3,3,5,5,7,11]; // 1,2,3,5,7,11,13,2,3];   
     shuffle(factors);
@@ -37,25 +28,6 @@ function load(){
     
 } // end of function load
 
-function shuffle(array){ // randomize order of elements in array
-    var length = array.length;
-    var i,j;
-    for(i=0; i<length; i++){
-	for(j=0; j<length; j++){
-	    var tmp = array[j];
-	    var k =  Math.floor( Math.random() * length );
-	    array[j] = array[k];
-	    if(Math.random() < 0.6){ // swap two elements
-		array[k] = tmp;
-	    }else{ // 3-way swap
-		var l = Math.floor( Math.random() * length );
-		array[k] = array[l];
-		array[l] = tmp;
-	    }
-	}
-    }
-}
-
 // ****************************************************************
 
 function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
@@ -69,6 +41,12 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
     this.columns = 3;
     this.answer_boxes = new HashTable({});
     this.clue_boxes = new HashTable({});
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + tile_size, this.y_offset, 
+					0, false, canvas, this);
+ this.numbers_entered_box = new number_box(this.tile_size, this.x_offset + 2*tile_size, this.y_offset, 
+					0, false, canvas, this);
+ this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
+					0, false, canvas, this);
     this.canvas = canvas;
     this.inputted_factors = new Array(8);
     console.log("canv width: " + canvas.width);
@@ -105,7 +83,7 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
 	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
 	    var the_factor = this.factors[factor_index];
 	    
-	    var the_answer_box = new clue_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
 					      the_factor, false, canvas, this);
 	    this.answer_boxes.setItem(key, the_answer_box ); 
 	}
@@ -118,7 +96,7 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
 	    var abox = this.answer_boxes.getItem(j + "," + i);
 	    row_product *= abox.number;
 	}
-	var the_clue_box = new clue_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
+	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
 					row_product, false, canvas, this);
 	//   the_box.show();
 	console.log("after the_box.show()");
@@ -131,7 +109,7 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
 	    var abox = this.answer_boxes.getItem(i + "," + j);
 	    col_product *= abox.number;
 	}
-	var the_clue_box = new clue_box(this.tile_size,
+	var the_clue_box = new number_box(this.tile_size,
 					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
 					col_product, false, canvas, this);
 	//   the_box.show();
@@ -143,18 +121,19 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
     for(var i = 1; i<=3; i++){
 	col_product *= this.answer_boxes.getItem(i + "," + i).number;
     }
-    var diag1_clue_box = new clue_box(this.tile_size, this.x_offset, this.y_offset, 
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
 				      col_product, false, canvas, this);
     this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
     col_product = 1;
     for(var i = 1; i<=3; i++){
 	col_product *= this.answer_boxes.getItem(i + "," + (4-i)).number;
     }
-    var diag2_clue_box = new clue_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
 				      col_product, false, canvas, this);
     this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
-    // ******************************************************************************
-    // methods:
+// ******************************************************************************
+   
+// methods:
 
     this.update_score = function(){
 
@@ -200,6 +179,13 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 	    - this.n_products_entered 
 	    - 2*this.n_product_clues_used;
 	    console.log("SCORE: " + score);
+
+	this.clues_used_box.number = this.n_product_clues_used + this.n_factor_clues_used;
+	this.numbers_entered_box.number = this.n_factors_entered + this.n_products_entered;
+	this.score_box.number = score;
+	this.clues_used_box.update_number();
+	this.numbers_entered_box.update_number();
+	this.score_box.update_number();
     }
     this.display = function(){ // show whole puzzle, showing texts or not as indicated by text_shown
 
@@ -261,13 +247,22 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 	}
     }
 
+  this.box_text_shown= function(ix, iy){
+	var box_coord = ix + ',' + iy;
+	if(this.clue_boxes.hasItem(box_coord)){
+	    return this.clue_boxes.items[box_coord].text_shown;
+	}else if(this.answer_boxes.hasItem(box_coord)){
+	    return this.answer_boxes.items[box_coord].text_shown;
+	}
+    }
+
 
 } // end of fs_puzzle_3x3
 
-// ********************************************************
+// ************************************************************************************
 
 // a clue_box has a rectangle containing a number, which can be shown or hidden
-function clue_box(box_size, x_offset, y_offset, number, text_shown, canvas, puzzle){
+function number_box(box_size, x_offset, y_offset, number, text_shown, canvas, puzzle){
     this.box_size = box_size;
     this.x_offset = x_offset;
     this.y_offset = y_offset;
@@ -299,31 +294,35 @@ function clue_box(box_size, x_offset, y_offset, number, text_shown, canvas, puzz
 	    this.ctx.fillText(this.user_input_value, this.text_x, this.text_y);
 	}
     }
-    this.show_number = function (){
+    this.show_number = function (){ // show the number and set text_shown to 'number'
 	this.ctx.fillStyle = "#000000";
 	this.ctx.fillText(this.number, this.text_x, this.text_y);
 	this.text_shown = 'number';
     }
-    this.show_input_value = function (){
-	this.ctx.fillStyle = "#008800";
+    this.update_number = function(){ // erase text, then show number
+	this.hide_text();
+	this.show_number();
+    }
+    this.show_input_value = function (){ // write the user-input value on the canvas
+	this.ctx.fillStyle = "#00A000";
 	this.ctx.fillText(this.user_input_value, this.text_x, this.text_y);
 	this.text_shown = 'user_input';
     }
-    this.hide_text = function(){
+    this.hide_text = function(){ // hide the text 
 	console.log("In number_box.hid.");
 	this.ctx.strokeStyle = "#FFFFFF";
 	this.ctx.fillStyle = "#FFFFFF";
 	this.ctx.fillRect( this.x_offset+5, this.y_offset+5, this.box_size-10, this.box_size-10);
 	this.text_shown = 'blank';
     }
-    this.toggle_text = function(){
-	if(this.text_shown){
-	    this.hide_number();
-	}else{
+    this.toggle_number = function(){ // 
+	if(this.text_shown == 'blank'){
 	    this.show_number();
+	}else{
+	    this.hide_text();
 	}
     }
-    this.input_number = function(){
+    this.input_number = function(){ // add input element
 	this.hide_text();
 	var width_coeff = 0.8;
 	var ac = document.createElement("input");
@@ -331,7 +330,6 @@ function clue_box(box_size, x_offset, y_offset, number, text_shown, canvas, puzz
 	ac.type = "text";
 	ac.style.size = 0; // Math.floor(0.1*box_size)
 	ac.className = "text";
-	
 
 	ac.addEventListener("keypress", function(event){
 	    if(event.charCode == 13){
@@ -397,7 +395,9 @@ function handle_canvas_click(event, canvas, puzzle_obj){
 	puzzle_obj.hide_box_text(ix, iy);
 	puzzle_obj.show_box_number(ix, iy);
     }else if(event.type == 'click'){
+	if(puzzle_obj.box_text_shown(ix, iy) != 'number'){
 	puzzle_obj.input_box_number(ix, iy);
+    }
 
     }
     //    puzzle_obj.toggle_box_text(ix, iy); 
