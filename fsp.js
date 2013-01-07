@@ -1,12 +1,8 @@
-var tile_size = 72; // tile size is tile_size x tile_size pixels.
+var tile_size = 96; // 120; // tile size is tile_size x tile_size pixels.
 var columns = 4; // number of columns of squares
 var rows = 5; // number of rows of squares
-//var canvas;
-//var ctx;
-// var font_size = 32;
 var offset_x = tile_size/2; // position of puzzle bounding rectangle UL corner rel to canvas UL corner.
 var offset_y = tile_size/2;
-//var dc = false;
 var heavy_line_width = 4; 
 
 var n_steps = 0;
@@ -15,16 +11,12 @@ function load(){
 
     var canvas = document.getElementById("the_canvas");
 
-    var factors = [2,3,4,5,6,7,8,9,10]; //[1,2,2,3,3,5,5,7,11]; // 1,2,3,5,7,11,13,2,3];   
+    var factors = [1,2,3,4,5,6,7,8,9]; //[1,2,2,3,3,5,5,7,11]; // 1,2,3,5,7,11,13,2,3];   
     shuffle(factors);
-
-    console.log("xxx: " + canvas.getContext("2d").font);
     var the_puzzle_obj = new fs_puzzle_3x3(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
-    console.log("yyy: " + canvas.getContext("2d").font);
     canvas.onclick = function(event){handle_canvas_click(event, canvas, the_puzzle_obj)};
-    canvas.oncontextmenu = function(event){handle_canvas_click(event, canvas, the_puzzle_obj)};
-    
+    canvas.oncontextmenu = function(event){handle_canvas_click(event, canvas, the_puzzle_obj)};   
     
 } // end of function load
 
@@ -269,12 +261,12 @@ function number_box(box_size, x_offset, y_offset, number, text_shown, canvas, pu
     this.number = number;
     this.text_shown = text_shown; // blank | number | user_input
     var the_box = this;
-    this.user_input_value = undefined;
+    this.user_input_value = '';
     this.count_inputs = 0;
 
-    var canvas_margin_etc = 
-	parseFloat(canvas.style.margin) + 
-	parseFloat(canvas.style.padding) + 
+    var canvas_margin_etc =
+	parseFloat(canvas.style.margin) +
+	parseFloat(canvas.style.padding) +
 	parseFloat(canvas.style.border);
 
     this.ctx = canvas.getContext("2d");
@@ -330,20 +322,29 @@ function number_box(box_size, x_offset, y_offset, number, text_shown, canvas, pu
 	ac.type = "text";
 	ac.style.size = 0; // Math.floor(0.1*box_size)
 	ac.className = "text";
+	ac.value = '';
 
 	ac.addEventListener("keypress", function(event){
 	    if(event.charCode == 13){
-		console.log("Input value: ", this.value);
+		console.log("this: " + this);
+		console.log("Input value:", this.value);
 		this.blur();
 //		this.destroy()
 	    }
 	}, false);
 	ac.addEventListener("blur", function(){
-	    console.log("this: " + this);
-	    the_box.user_input_value = this.value;
+	    console.log("old/new values: " + the_box.user_input_value + "; " + this.value);
+	  //  console.log("this: " + this);
+	    if(this.value != the_box.user_input_value){
+		console.log("AAAAAAAAA: " + the_box.user_input_value);
+//		if(1 or this.value != ''){ 
+the_box.count_inputs++; 
+//}
+		the_box.user_input_value = this.value;
+	    }
+	    console.log("count_inputs: " + the_box.count_inputs);
 	    document.body.removeChild(ac);
-	    the_box.show_input_value();	 
-	    if(this.value != ''){ the_box.count_inputs++; }
+	    the_box.show_input_value();
 	    puzzle.update_score(); // 4*n_right_factor_answers + 2*n_right_clue_answers - (3*n_clues_shown + 2*n_answersinput + n_clues_input)
 	}, false);
 	
@@ -376,8 +377,8 @@ function handle_canvas_click(event, canvas, puzzle_obj){
     this.y = event.pageY - canvas_margin_etc;
     console.log("mouse x,y rel to canvas UL corner: " + this.x + " " + this.y);
     this.puzzle_obj = puzzle_obj;
-    var dx0 = (this.x - (offset_x + 0.5*tile_size)); // distance from center of first square
-    var dy0 = (this.y - (offset_y + 0.5*tile_size));
+    var dx0 = (this.x - (puzzle_obj.x_offset + 0.5*tile_size)); // distance from center of first square
+    var dy0 = (this.y - (puzzle_obj.y_offset + 0.5*tile_size));
     
     var ix =  Math.round(dx0/tile_size);
     var iy =  Math.round(dy0/tile_size);
