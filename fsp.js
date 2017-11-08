@@ -24,7 +24,7 @@ function load(){
     var offset_y = tile_size*offset_y_in_tiles;
 
     var the_puzzle_obj = 
- new fs_puzzle_3x3(tile_size, offset_x, offset_y, factors, canvas);
+new fs_puzzle_3x3(tile_size, offset_x, offset_y, factors, canvas);
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
