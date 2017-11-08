@@ -1,6 +1,16 @@
 Javascript interactive factor square puzzle. 
 You are presented with a blank puzzle, with
-none of its clues or answers displayed. You can click on
-a cell to display its clue. As you see more and more clues
+none of its clues or answers displayed. You can right-click on
+a cell to display its clue, left-click to enter numbers when you know what they
+are. As you see more and more clues
 you can infer more of the answers. The idea is to complete
 the puzzle using the fewest clues.
+The number above the puzzle is your score. It goes down when you use
+clues, or when you enter a wrong number, and up when you enter a correct number.
+The three numbers below the puzzle are, from left to right, the numbers of 
+clues used, wrong numbers entered, and correct answers entered.
+The score starts at 16, and clues cost 2 points each, so if you start by asking for
+all 8 possible clues (on the outside, i.e. the products of the rows, columns,
+and diagonals), you will start with a score of 0. Correct answers are worth
+2 points. Wrong answers cost 1 point, but after you have entered the correct answer
+in a square, if you then enter a wrong answer in the same square, it costs 4 points.
