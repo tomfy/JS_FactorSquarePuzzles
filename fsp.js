@@ -26,8 +26,11 @@ function load(){
     var offset_y = tile_size*offset_y_in_tiles;
 
     var the_puzzle_obj = 
-//new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
-new fs_puzzle_3x4(tile_size, offset_x, offset_y, [1,1,2,2,2,3,3,3,5,5,7,11], canvas);
+// new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
+ new fs_puzzle_3x4(tile_size, offset_x, offset_y, 
+        [1,1,2,2,3,3,5,5,7,7,11,13], 
+ //   [4,5,6,7,8,9,10,11,12,13,14,15],
+canvas);
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
@@ -38,119 +41,14 @@ new fs_puzzle_3x4(tile_size, offset_x, offset_y, [1,1,2,2,2,3,3,3,5,5,7,11], can
 
 // ****************************************************************
 
-function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
-{
-
+function fs_puzzle(tile_size, x_offset, y_offset, factors, canvas){
     this.tile_size = tile_size;
     this.x_offset = x_offset;
     this.y_offset = y_offset;
     this.factors = factors;
-    this.rows = 3; // number of rows in the answer part (inside heavy black box)
-    this.columns = 3; // number of columns in the answer part.
-    this.answer_boxes = new HashTable({});
+    shuffle(this.factors);
+  this.answer_boxes = new HashTable({});
     this.clue_boxes = new HashTable({});
-    var spacing_factor = 0.95;
-    var score_x_offset = 0.2*tile_size;
-    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
- this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
-this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
- this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
-					0, false, canvas, this);
- //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
-//					0, false, canvas, this);
-    this.canvas = canvas;
-    this.inputted_factors = new Array(8);
-    console.log("canv width: " + canvas.width);
-    canvas.width = (this.columns+3) * tile_size;
-    canvas.height = (this.rows+4) * tile_size;
-
-    this.n_factors_entered = 0;
-    this.n_correct_factors = 0; 
-    this.n_factor_clues_used = 0;
-
-    this.n_products_entered = 0;
-    this.n_correct_products = 0;
-    this.n_product_clues_used = 0;
-    
-
-    // this.ctx = canvas.getContext("2d");
-    //    console.log("cntxt font: " + ctx);
-
-    this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 32 + "px Arial";
-    //    console.log("font_size: " + font_size );
-    console.log("ctx.font: " + this.ctx.font);
-    
-    this.ctx.textAlign="center";
-    this.ctx.textBaseline="middle";
-
-    //    this.answers = new Array();
-    console.log(this);
-    // 3x3 answer boxes.
-    for(var i=1; i<=this.rows; i++){
-	//	this.answers[i] = new Array();
-	for(var j=1; j<=this.columns; j++){
-	    var key = j + "," + i;
-	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
-	    
-	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
-	    this.answer_boxes.setItem(key, the_answer_box ); 
-	}
-    }
-    
-    // clue boxes - rows
-    for(var i=1; i<=this.rows; i++){
-	var row_product = 1;
-	for(var j=1; j<=this.columns; j++){
-	    var abox = this.answer_boxes.getItem(j + "," + i);
-	    row_product *= abox.number;
-	}
-	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
-					row_product, false, canvas, this);
-	//   the_box.show();
-	console.log("after the_box.show()");
-	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
-    }
-    // clue boxes - columns
-    for(var i=1; i<=this.columns; i++){
-	var col_product = 1;
-	for(var j=1; j<=this.rows; j++){
-	    var abox = this.answer_boxes.getItem(i + "," + j);
-	    col_product *= abox.number;
-	}
-	var the_clue_box = new number_box(this.tile_size,
-					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
-					col_product, false, canvas, this);
-	//   the_box.show();
-	console.log("after the_box.show()");
-	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
-    }
-    // clue boxes - diagonals
-    var col_product = 1;
-    for(var i = 1; i<=3; i++){
-	col_product *= this.answer_boxes.getItem(i + "," + i).number;
-    }
-    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
-    col_product = 1;
-    for(var i = 1; i<=3; i++){
-	col_product *= this.answer_boxes.getItem(i + "," + (4-i)).number;
-    }
-    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
-// ******************************************************************************
-   
-
-// methods:
-
-    this.update_score = function(){
 
 	this.n_factors_entered = 0;
 	this.n_correct_factors = 0; 
@@ -158,265 +56,15 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 	this.n_products_entered = 0;
 	this.n_correct_products = 0; 
-	this.n_product_clues_used = 0;
+	this.n_product_clues_used = 0;  
 
-	for (var box_coord in this.clue_boxes.items) {
-	    if (this.clue_boxes.hasItem(box_coord)) {
-		//	this.clue_boxes.items[box_coord].show_box();
-	this.n_products_entered += this.clue_boxes.items[box_coord].count_inputs;
-		if(this.clue_boxes.items[box_coord].number == this.clue_boxes.items[box_coord].user_input_value){
-		    this.n_correct_products++;
-		}
-		if(this.clue_boxes.items[box_coord].text_shown == 'number'){
-		    this.n_product_clues_used++;
-		}
-		
-	    }
-	}
-	console.log("puzzle products entered: " + this.n_products_entered + ". correct products entered: " + this.n_correct_products  + ". product clues used: " + this.n_product_clues_used);
-	for (var box_coord in this.answer_boxes.items) {
-	    if (this.answer_boxes.hasItem(box_coord)) {
-		this.n_factors_entered += this.answer_boxes.items[box_coord].count_inputs;
-		if(this.answer_boxes.items[box_coord].number == this.answer_boxes.items[box_coord].user_input_value){
-		    this.n_correct_factors++;
-		}
-if(this.answer_boxes.items[box_coord].text_shown == 'number'){
-		    this.n_factor_clues_used++;
-		}
-	    }
-	}
-	console.log("puzzle factors entered: " + this.n_factors_entered + ". correct factors entered: " + this.n_correct_factors + ". factor clues used: " + this.n_factor_clues_used);
-// revealing a clue -2 pts, right answer +2 points, wrong answer -1 point.
-	var score = 16 +
-	    3*this.n_correct_factors 
-	    - this.n_factors_entered 
-	    - 2*this.n_factor_clues_used 
-	    + 3*this.n_correct_products 
-	    - this.n_products_entered 
-	    - 2*this.n_product_clues_used;
-	    console.log("SCORE: " + score);
-
-	this.clues_used_box.number = this.n_product_clues_used + this.n_factor_clues_used;
-	this.n_correct_box.number = this.n_correct_factors + this.n_correct_products;
-	this.n_wrong_box.number = this.n_factors_entered + this.n_products_entered - this.n_correct_box.number;
-	this.score_box.number = score;
-	this.clues_used_box.update_number();
-	this.n_wrong_box.update_number();
-	this.n_correct_box.update_number();
-	this.score_box.update_number();
-    }
-    this.display = function(){ // show whole puzzle, showing texts or not as indicated by text_shown
-
-	this.ctx.lineWidth=heavy_line_width; // heavy box (holds the answer cells)
-	this.ctx.strokeRect(x_offset + tile_size, y_offset + tile_size, 3*tile_size, 3*tile_size);
-	this.ctx.lineWidth=2;
-	for (var box_coord in this.clue_boxes.items) {
-	    if (this.clue_boxes.hasItem(box_coord)) {
-		this.clue_boxes.items[box_coord].show_box();
-	    }
-	}
-	for (var box_coord in this.answer_boxes.items) {
-	    if (this.answer_boxes.hasItem(box_coord)) {
-		this.answer_boxes.items[box_coord].show_box();
-	    }
-	}
-	
-    }
-
-    this.show_box_number = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	console.log("top of show_a_box");
-	if(this.clue_boxes.hasItem(box_coord)){	    
-	    var abox = this.clue_boxes.items[box_coord];
-	    abox.text_shown = 'number';
-	    abox.show_box();
-	}else if(this.answer_boxes.hasItem(box_coord)){	    
-	    var abox = this.answer_boxes.items[box_coord];
-	    abox.text_shown = 'number';
-	    abox.show_box();
-	}
-    }
-    this.hide_box_text = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.clue_boxes.hasItem(box_coord)){
-	    console.log("in hide_a_box");
-	    var abox = this.clue_boxes.items[box_coord];
-	    abox.text_shown = false;
-	    abox.hide_text();
-	}else if(this.answer_boxes.hasItem(box_coord)){	    
-	    var abox = this.answer_boxes.items[box_coord];
-	    abox.text_shown = false;
-	    abox.hide_text();
-	}
-    }
-    this.toggle_box_text = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.clue_boxes.hasItem(box_coord)){
-	    this.clue_boxes.items[box_coord].toggle_text();
-	}else if(this.answer_boxes.hasItem(box_coord)){
-	    this.answer_boxes.items[box_coord].toggle_text();
-	}
-    }
-    this.input_box_number= function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.clue_boxes.hasItem(box_coord)){
-	    this.clue_boxes.items[box_coord].input_number();
-	}else if(this.answer_boxes.hasItem(box_coord)){
-	    this.answer_boxes.items[box_coord].input_number();
-	}
-    }
-
-  this.box_text_shown= function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.clue_boxes.hasItem(box_coord)){
-	    return this.clue_boxes.items[box_coord].text_shown;
-	}else if(this.answer_boxes.hasItem(box_coord)){
-	    return this.answer_boxes.items[box_coord].text_shown;
-	}
-    }
-
-
-} // end of fs_puzzle_3x3
-
-
-function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
-{
-
-    this.tile_size = tile_size;
-    this.x_offset = x_offset;
-    this.y_offset = y_offset;
-    this.factors = factors;
-    this.rows = 3; // number of rows in the answer part (inside heavy black box)
-    this.columns = 4; // number of columns in the answer part.
-    this.answer_boxes = new HashTable({});
-    this.clue_boxes = new HashTable({});
-    var spacing_factor = 0.95;
-    var score_x_offset = 0.2*tile_size;
-    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
- this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
-this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
- this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
-					0, false, canvas, this);
- //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
-//					0, false, canvas, this);
-    this.canvas = canvas;
-    this.inputted_factors = new Array(8);
-    console.log("canv width: " + canvas.width);
-    canvas.width = (this.columns+3) * tile_size;
-    canvas.height = (this.rows+4) * tile_size;
-
-    this.n_factors_entered = 0;
-    this.n_correct_factors = 0; 
-    this.n_factor_clues_used = 0;
-
-    this.n_products_entered = 0;
-    this.n_correct_products = 0;
-    this.n_product_clues_used = 0;
-    
-
-    // this.ctx = canvas.getContext("2d");
-    //    console.log("cntxt font: " + ctx);
-
-    this.ctx = canvas.getContext("2d");   
+/* this.ctx = canvas.getContext("2d");   
     this.ctx.font = " bold " + 32 + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
     this.ctx.textAlign="center";
-    this.ctx.textBaseline="middle";
-
-    //    this.answers = new Array();
-    console.log(this);
-    // 3x4 answer boxes.
-    for(var i=1; i<=this.rows; i++){
-	//	this.answers[i] = new Array();
-	for(var j=1; j<=this.columns; j++){
-	    var key = j + "," + i;
-	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
-	    
-	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
-	    this.answer_boxes.setItem(key, the_answer_box ); 
-	}
-    }
-    
-    // clue boxes - rows
-    for(var i=1; i<=this.rows; i++){
-	var row_product = 1;
-	for(var j=1; j<=3; j++){
-	    var abox = this.answer_boxes.getItem(j + "," + i);
-	    row_product *= abox.number;
-	}
-	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
-					row_product, false, canvas, this);
-	//   the_box.show();
-	console.log("after the_box.show()");
-	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
-
-        row_product = 1;
-	for(var j=this.columns-2; j<=this.columns; j++){
-	    var abox = this.answer_boxes.getItem(j + "," + i);
-	    row_product *= abox.number;
-	}
-	var the_clue_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					row_product, false, canvas, this);
-	//   the_box.show();
-	console.log("after the_box.show()");
-	this.clue_boxes.setItem( (this.columns+1) + "," + i, the_clue_box ); 
-    }
-    // clue boxes - columns
-    for(var i=1; i<=this.columns; i++){
-	var col_product = 1;
-	for(var j=1; j<=this.rows; j++){
-	    var abox = this.answer_boxes.getItem(i + "," + j);
-	    col_product *= abox.number;
-	}
-	var the_clue_box = new number_box(this.tile_size,
-					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
-					col_product, false, canvas, this);
-	//   the_box.show();
-	console.log("after the_box.show()");
-	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
-    }
-    // clue boxes - diagonals
-    var col_product = 1;
-    for(var i = 1; i<=3; i++){
-	col_product *= this.answer_boxes.getItem(i + "," + i).number;
-    }
-    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
-
-    col_product = 1;
-    for(var i = 1; i<=3; i++){
-	col_product *= this.answer_boxes.getItem(i + "," + (4-i)).number;
-    }
-    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
-
-    col_product = 1;
-    for(var i = 1; i<=3; i++){
-        console.log("i: " + i + "  " +this.columns);
-	col_product *= this.answer_boxes.getItem((i+1) + "," + (4-i)).number;
-    }
-    var diag3_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( (this.columns+1) + "," + 0, diag3_clue_box ); 
-
-    col_product = 1;
-    for(var i = 1; i<=3; i++){
-	col_product *= this.answer_boxes.getItem(i+1 + "," + i).number;
-    }
-    var diag4_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, (this.rows+1)*tile_size + this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( (this.columns+1) + "," + (this.rows+1), diag4_clue_box ); 
-
-// ******************************************************************************
+    this.ctx.textBaseline="middle"; */
 
 // methods:
 
@@ -545,6 +193,226 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 	}
     }
 
+}
+
+function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
+{
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
+  
+    this.rows = 3; // number of rows in the answer part (inside heavy black box)
+    this.columns = 3; // number of columns in the answer part.
+    var spacing_factor = 0.95;
+    var score_x_offset = 0.2*tile_size;
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
+					0, false, canvas, this);
+ //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
+//					0, false, canvas, this);
+   // this.canvas = canvas;
+
+//  this.inputted_factors = new Array(8);
+    console.log("canv width: " + canvas.width);
+    canvas.width = (this.columns+3) * tile_size;
+    canvas.height = (this.rows+4) * tile_size;
+
+   this.ctx = canvas.getContext("2d");   
+    this.ctx.font = " bold " + 32 + "px Arial";
+    //    console.log("font_size: " + font_size );
+    console.log("ctx.font: " + this.ctx.font);
+    
+    this.ctx.textAlign="center";
+    this.ctx.textBaseline="middle";
+ 
+    //    this.answers = new Array();
+    console.log(this);
+    // 3x3 answer boxes.
+    for(var i=1; i<=this.rows; i++){
+	//	this.answers[i] = new Array();
+	for(var j=1; j<=this.columns; j++){
+	    var key = j + "," + i;
+	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
+	    var the_factor = this.factors[factor_index];
+	    
+	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					      the_factor, false, canvas, this);
+	    this.answer_boxes.setItem(key, the_answer_box ); 
+	}
+    }
+    
+    // clue boxes - rows
+    for(var i=1; i<=this.rows; i++){
+	var row_product = 1;
+	for(var j=1; j<=this.columns; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
+    }
+    // clue boxes - columns
+    for(var i=1; i<=this.columns; i++){
+	var col_product = 1;
+	for(var j=1; j<=this.rows; j++){
+	    var abox = this.answer_boxes.getItem(i + "," + j);
+	    col_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size,
+					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+					col_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
+    }
+    // clue boxes - diagonals
+    var col_product = 1;
+    for(var i = 1; i<=3; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + i).number;
+    }
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
+    col_product = 1;
+    for(var i = 1; i<=3; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + (4-i)).number;
+    }
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
+// ******************************************************************************
+
+} // end of fs_puzzle_3x3
+
+
+function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
+{
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
+    this.rows = 3; // number of rows in the answer part (inside heavy black box)
+    this.columns = 4; // number of columns in the answer part.
+  
+    var spacing_factor = 0.95;
+    var score_x_offset = 0.2*tile_size;
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
+					0, false, canvas, this);
+ //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
+//					0, false, canvas, this);
+  //  this.canvas = canvas;
+ //   this.inputted_factors = new Array(8);
+    console.log("canv width: " + canvas.width);
+    canvas.width = (this.columns+3) * tile_size;
+    canvas.height = (this.rows+4) * tile_size;
+
+    this.ctx = canvas.getContext("2d");   
+    this.ctx.font = " bold " + 32 + "px Arial";
+    //    console.log("font_size: " + font_size );
+    console.log("ctx.font: " + this.ctx.font);
+    
+    this.ctx.textAlign="center";
+    this.ctx.textBaseline="middle";
+
+    //    this.answers = new Array();
+    console.log(this);
+    // 3x4 answer boxes.
+    for(var i=1; i<=this.rows; i++){
+	//	this.answers[i] = new Array();
+	for(var j=1; j<=this.columns; j++){
+	    var key = j + "," + i;
+	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
+	    var the_factor = this.factors[factor_index];
+	    
+	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					      the_factor, false, canvas, this);
+	    this.answer_boxes.setItem(key, the_answer_box ); 
+	}
+    }
+    
+    // clue boxes - rows
+    for(var i=1; i<=this.rows; i++){
+	var row_product = 1;
+	for(var j=1; j<=3; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
+
+        row_product = 1;
+	for(var j=this.columns-2; j<=this.columns; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( (this.columns+1) + "," + i, the_clue_box ); 
+    }
+    // clue boxes - columns
+    for(var i=1; i<=this.columns; i++){
+	var col_product = 1;
+	for(var j=1; j<=this.rows; j++){
+	    var abox = this.answer_boxes.getItem(i + "," + j);
+	    col_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size,
+					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+					col_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
+    }
+    // clue boxes - diagonals
+    var col_product = 1;
+    for(var i = 1; i<=3; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + i).number;
+    }
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + (4-i)).number;
+    }
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){
+        console.log("i: " + i + "  " +this.columns);
+	col_product *= this.answer_boxes.getItem((i+1) + "," + (4-i)).number;
+    }
+    var diag3_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1) + "," + 0, diag3_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){
+	col_product *= this.answer_boxes.getItem(i+1 + "," + i).number;
+    }
+    var diag4_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1) + "," + (this.rows+1), diag4_clue_box ); 
+
+// ******************************************************************************
+
 
 } // end of fs_puzzle_3x4
 
@@ -552,15 +420,15 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 function fs_puzzle_3x3_type2(tile_size, x_offset, y_offset, factors, canvas)
 // the factors go along the edges, and the products in the middle
 {
-
-    this.tile_size = tile_size;
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
+  /*  this.tile_size = tile_size;
     this.x_offset = x_offset;
     this.y_offset = y_offset;
-    this.factors = factors;
+    this.factors = factors; */
     this.rows = 3;
     this.columns = 3;
-    this.factor_boxes = new HashTable({});
-    this.product_boxes = new HashTable({});
+    this.answer_boxes = new HashTable({});
+    this.clue_boxes = new HashTable({});
     this.clues_used_box = new number_box(this.tile_size, this.x_offset + tile_size, this.y_offset + 5*tile_size, 
 					0, false, canvas, this);
  this.n_wrong_box = new number_box(this.tile_size, this.x_offset + 2*tile_size, this.y_offset + 5*tile_size, 
@@ -569,23 +437,11 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
 					0, false, canvas, this);
  this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
 					0, false, canvas, this);
-    this.canvas = canvas;
-    this.inputted_factors = new Array(8);
+ //   this.canvas = canvas;
+ //   this.inputted_factors = new Array(8);
     console.log("canv width: " + canvas.width);
     canvas.width = (this.columns+3) * tile_size;
     canvas.height = (this.rows+4) * tile_size;
-
-    this.n_factors_entered = 0;
-    this.n_correct_factors = 0; 
-    this.n_factor_clues_used = 0;
-
-    this.n_products_entered = 0;
-    this.n_correct_products = 0;
-    this.n_product_clues_used = 0;
-    
-
-    // this.ctx = canvas.getContext("2d");
-    //    console.log("cntxt font: " + ctx);
 
     this.ctx = canvas.getContext("2d");   
     this.ctx.font = " bold " + 32 + "px Arial";
@@ -601,7 +457,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
 	var the_factor_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
 					this.factors[i-1], false, canvas, this);
 	console.log("after the_box.show()");
-	this.factor_boxes.setItem( 0 + "," + i, the_factor_box ); 
+	this.answer_boxes.setItem( 0 + "," + i, the_factor_box ); 
     }
     // factor boxes - columns
     for(var i=1; i<=this.columns; i++){
@@ -609,7 +465,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
 					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
 					this.factors[this.rows+i - 1], false, canvas, this);
 	console.log("after the_box.show()");
-	this.factor_boxes.setItem( i + "," + (this.rows+1), the_factor_box ); 
+	this.answer_boxes.setItem( i + "," + (this.rows+1), the_factor_box ); 
     }
 
     //    this.answers = new Array();
@@ -621,145 +477,17 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
 	    var key = j + ',' + i;
 	    var l_factor_key = '0,' + i;
 	    var b_factor_key = j + ',' + (this.rows+1);
-	    var l_factor = this.factor_boxes.getItem(l_factor_key).number;
-	    var b_factor = this.factor_boxes.getItem(b_factor_key).number;
+	    var l_factor = this.answer_boxes.getItem(l_factor_key).number;
+	    var b_factor = this.answer_boxes.getItem(b_factor_key).number;
 	    console.log("factors: " + l_factor + "  " + b_factor);
 	    var the_product_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
 					      l_factor*b_factor, false, canvas, this);
-	    this.product_boxes.setItem(key, the_product_box ); 
+	    this.clue_boxes.setItem(key, the_product_box ); 
 	}
     }
     
 // ******************************************************************************
    
-// methods:
-
-    this.update_score = function(){
-
-	this.n_factors_entered = 0;
-	this.n_correct_factors = 0; 
-	this.n_factor_clues_used = 0;
-
-	this.n_products_entered = 0;
-	this.n_correct_products = 0; 
-	this.n_product_clues_used = 0;
-
-	for (var box_coord in this.product_boxes.items) {
-	    if (this.product_boxes.hasItem(box_coord)) {
-		//	this.product_boxes.items[box_coord].show_box();
-	this.n_products_entered += this.product_boxes.items[box_coord].count_inputs;
-		if(this.product_boxes.items[box_coord].number == this.product_boxes.items[box_coord].user_input_value){
-		    this.n_correct_products++;
-		}
-		if(this.product_boxes.items[box_coord].text_shown == 'number'){
-		    this.n_product_clues_used++;
-		}
-		
-	    }
-	}
-	console.log("puzzle products entered: " + this.n_products_entered + ". correct products entered: " + this.n_correct_products  + ". product clues used: " + this.n_product_clues_used);
-	for (var box_coord in this.factor_boxes.items) {
-	    if (this.factor_boxes.hasItem(box_coord)) {
-		this.n_factors_entered += this.factor_boxes.items[box_coord].count_inputs;
-		if(this.factor_boxes.items[box_coord].number == this.factor_boxes.items[box_coord].user_input_value){
-		    this.n_correct_factors++;
-		}
-if(this.factor_boxes.items[box_coord].text_shown == 'number'){
-		    this.n_factor_clues_used++;
-		}
-	    }
-	}
-	console.log("puzzle factors entered: " + this.n_factors_entered + ". correct factors entered: " + this.n_correct_factors + ". factor clues used: " + this.n_factor_clues_used);
-	var score = 16 +
-	    3*this.n_correct_factors 
-	    - this.n_factors_entered 
-	    - 2*this.n_factor_clues_used 
-	    + 3*this.n_correct_products 
-	    - this.n_products_entered 
-	    - 2*this.n_product_clues_used;
-	    console.log("SCORE: " + score);
-
-	this.clues_used_box.number = this.n_product_clues_used + this.n_factor_clues_used;
-	
-	this.n_correct_box.number = this.n_correct_factors + this.n_correct_products;
-	this.n_wrong_box.number = this.n_factors_entered + this.n_products_entered - this.n_correct_box.number;
-	this.score_box.number = score;
-
-	this.clues_used_box.update_number();
-	this.n_wrong_box.update_number();
-	this.n_correct_box.update_number();
-	this.score_box.update_number();
-    }
-    this.display = function(){ // show whole puzzle, showing texts or not as indicated by text_shown
-
-	this.ctx.lineWidth=heavy_line_width; // heavy box (holds the answer cells)
-	this.ctx.strokeRect(x_offset + tile_size, y_offset + tile_size, 3*tile_size, 3*tile_size);
-	this.ctx.lineWidth=2;
-	for (var box_coord in this.product_boxes.items) {
-	    if (this.product_boxes.hasItem(box_coord)) {
-		this.product_boxes.items[box_coord].show_box();
-	    }
-	}
-	for (var box_coord in this.factor_boxes.items) {
-	    if (this.factor_boxes.hasItem(box_coord)) {
-		this.factor_boxes.items[box_coord].show_box();
-	    }
-	}
-    }
-
-    this.show_box_number = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	console.log("top of show_a_box");
-	if(this.product_boxes.hasItem(box_coord)){	    
-	    var abox = this.product_boxes.items[box_coord];
-	    abox.text_shown = 'number';
-	    abox.show_box();
-	}else if(this.factor_boxes.hasItem(box_coord)){	    
-	    var abox = this.factor_boxes.items[box_coord];
-	    abox.text_shown = 'number';
-	    abox.show_box();
-	}
-    }
-    this.hide_box_text = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.product_boxes.hasItem(box_coord)){
-	    console.log("in hide_a_box");
-	    var abox = this.product_boxes.items[box_coord];
-	    abox.text_shown = false;
-	    abox.hide_text();
-	}else if(this.factor_boxes.hasItem(box_coord)){	    
-	    var abox = this.factor_boxes.items[box_coord];
-	    abox.text_shown = false;
-	    abox.hide_text();
-	}
-    }
-    this.toggle_box_text = function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.product_boxes.hasItem(box_coord)){
-	    this.product_boxes.items[box_coord].toggle_text();
-	}else if(this.factor_boxes.hasItem(box_coord)){
-	    this.factor_boxes.items[box_coord].toggle_text();
-	}
-    }
-    this.input_box_number= function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.product_boxes.hasItem(box_coord)){
-	    this.product_boxes.items[box_coord].input_number();
-	}else if(this.factor_boxes.hasItem(box_coord)){
-	    this.factor_boxes.items[box_coord].input_number();
-	}
-    }
-
-  this.box_text_shown= function(ix, iy){
-	var box_coord = ix + ',' + iy;
-	if(this.product_boxes.hasItem(box_coord)){
-	    return this.product_boxes.items[box_coord].text_shown;
-	}else if(this.factor_boxes.hasItem(box_coord)){
-	    return this.factor_boxes.items[box_coord].text_shown;
-	}
-    }
-
-
 } // end of fs_puzzle_3x3_type2
 
 
