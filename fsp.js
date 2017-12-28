@@ -1,8 +1,6 @@
 var tile_size = 72; // 120; // tile size is tile_size x tile_size pixels.
-var columns = 4; // number of columns of squares
-var rows = 5; // number of rows of squares
-var offset_x_in_tiles = 0.75; // tile_size/2; // position of puzzle bounding rectangle UL corner rel to canvas UL corner.
-var offset_y_in_tiles = 0.75; // tile_size/2;
+var offset_x_in_tiles = 1.4; //0.75; // tile_size/2; // position of puzzle bounding rectangle UL corner rel to canvas UL corner.
+var offset_y_in_tiles = 1.4; // tile_size/2;
 var heavy_line_width = 4; 
 
 var n_steps = 0;
@@ -27,10 +25,8 @@ function load(){
 
     var the_puzzle_obj = 
 // new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
- new fs_puzzle_3x4(tile_size, offset_x, offset_y, 
-        [1,1,2,2,3,3,5,5,7,7,11,13], 
- //   [4,5,6,7,8,9,10,11,12,13,14,15],
-canvas);
+// new fs_puzzle_3x4(tile_size, offset_x, offset_y, [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
+ new fs_puzzle_5x5(tile_size, offset_x, offset_y, [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], canvas);
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
@@ -105,7 +101,7 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 	}
 	console.log("puzzle factors entered: " + this.n_factors_entered + ". correct factors entered: " + this.n_correct_factors + ". factor clues used: " + this.n_factor_clues_used);
 // revealing a clue -2 pts, right answer +2 points, wrong answer -1 point.
-	var score = 16 +
+	var score = this.init_score +
 	    3*this.n_correct_factors 
 	    - this.n_factors_entered 
 	    - 2*this.n_factor_clues_used 
@@ -127,6 +123,7 @@ if(this.answer_boxes.items[box_coord].text_shown == 'number'){
 
 	this.ctx.lineWidth=heavy_line_width; // heavy box (holds the answer cells)
 	this.ctx.strokeRect(x_offset + tile_size, y_offset + tile_size, this.columns*tile_size, this.rows*tile_size);
+
 	this.ctx.lineWidth=2;
 	for (var box_coord in this.clue_boxes.items) {
 	    if (this.clue_boxes.hasItem(box_coord)) {
@@ -201,15 +198,17 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
   
     this.rows = 3; // number of rows in the answer part (inside heavy black box)
     this.columns = 3; // number of columns in the answer part.
-    var spacing_factor = 0.95;
-    var score_x_offset = 0.2*tile_size;
+this.init_score = 16; // such that if first thing you do is do ask for all clues, you will then have 0
+    var spacing_factor = 1.0;
+    var score_x_offset = 0.0*tile_size;
+var score_x_position = (1 + (this.columns-1)/2)*tile_size;
     this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
  this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
 this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
- this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset, 
 					0, false, canvas, this);
  //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
 //					0, false, canvas, this);
@@ -217,8 +216,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 //  this.inputted_factors = new Array(8);
     console.log("canv width: " + canvas.width);
-    canvas.width = (this.columns+3) * tile_size;
-    canvas.height = (this.rows+4) * tile_size;
+    canvas.width = (this.columns+1) * tile_size + 2*this.x_offset;
+    canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
    this.ctx = canvas.getContext("2d");   
     this.ctx.font = " bold " + 32 + "px Arial";
@@ -290,30 +289,31 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 } // end of fs_puzzle_3x3
 
-
 function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
     this.rows = 3; // number of rows in the answer part (inside heavy black box)
     this.columns = 4; // number of columns in the answer part.
-  
-    var spacing_factor = 0.95;
-    var score_x_offset = 0.2*tile_size;
+  this.init_score = 28; // such that if first thing you do is do ask for all clues, you will then have 0
+
+    var spacing_factor = 1.0; // 0.95;
+    var score_x_offset = 0.0*tile_size;
+    var score_x_position = (1 + (this.columns-1)/2)*tile_size;
     this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
  this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
 this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
 					0, false, canvas, this);
- this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset, 
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset, 
 					0, false, canvas, this);
  //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
 //					0, false, canvas, this);
   //  this.canvas = canvas;
  //   this.inputted_factors = new Array(8);
     console.log("canv width: " + canvas.width);
-    canvas.width = (this.columns+3) * tile_size;
-    canvas.height = (this.rows+4) * tile_size;
+    canvas.width = (this.columns+2) * tile_size + 2*this.x_offset;
+    canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
     this.ctx.font = " bold " + 32 + "px Arial";
@@ -417,6 +417,145 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 } // end of fs_puzzle_3x4
 
 
+function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, canvas)
+{
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
+    this.rows = 5; // number of rows in the answer part (inside heavy black box)
+    this.columns = 5; // number of columns in the answer part.
+  this.init_score = 48; // such that if first thing you do is do ask for all clues, you will then have 0
+
+    var spacing_factor = 1.4;
+    var score_x_offset = 0.0*tile_size;
+    var score_x_position = (1 + (this.columns-1)/2)*tile_size;
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position - spacing_factor*tile_size, this.y_offset + (this.rows+2+0.1)*this.tile_size, 
+					0, false, canvas, this);
+ this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset + (this.rows+2+0.1)*this.tile_size, 
+					0, false, canvas, this);
+this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position + spacing_factor*tile_size, this.y_offset + (this.rows+2+0.1)*this.tile_size, 
+					0, false, canvas, this);
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset - 1.1*tile_size, 
+					0, false, canvas, this);
+ //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
+//					0, false, canvas, this);
+  //  this.canvas = canvas;
+ //   this.inputted_factors = new Array(8);
+    console.log("canv width: " + canvas.width);
+    canvas.width = (this.columns+2) * tile_size  + 2*this.x_offset;
+    canvas.height = (this.rows+2) * tile_size  + 2*this.y_offset;
+
+    this.ctx = canvas.getContext("2d");   
+    this.ctx.font = " bold " + 32 + "px Arial";
+    //    console.log("font_size: " + font_size );
+    console.log("ctx.font: " + this.ctx.font);
+    
+    this.ctx.textAlign="center";
+    this.ctx.textBaseline="middle";
+
+    //    this.answers = new Array();
+    console.log(this);
+    // 5x5 answer boxes.
+    for(var i=1; i<=this.rows; i++){
+	//	this.answers[i] = new Array();
+	for(var j=1; j<=this.columns; j++){
+	    var key = j + "," + i;
+	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
+	    var the_factor = this.factors[factor_index];
+	    
+	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					      the_factor, false, canvas, this);
+	    this.answer_boxes.setItem(key, the_answer_box ); 
+	}
+    }
+    
+    // clue boxes - rows
+    for(var i=1; i<=this.rows; i++){
+	var row_product = 1; // left side row clues
+	for(var j=1; j<=3; j++){ 
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
+
+        row_product = 1; // right side row clues
+	for(var j=this.columns-2; j<=this.columns; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( (this.columns+1) + "," + i, the_clue_box ); 
+    }
+    // clue boxes - columns
+    for(var i=1; i<=this.columns; i++){
+	var col_product = 1; // top edge col. clues
+	for(var j=1; j<=3; j++){
+	    var abox = this.answer_boxes.getItem(i + "," + j);
+	    col_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size,
+					this.x_offset + i*tile_size, this.y_offset, 
+					col_product, false, canvas, this);
+        this.clue_boxes.setItem( i + "," + 0, the_clue_box ); 
+
+
+	col_product = 1; // bottom edge col. clues
+	for(var j=this.rows-2; j<=this.rows; j++){
+	    var abox = this.answer_boxes.getItem(i + "," + j);
+	    col_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size,
+					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+					col_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
+    }
+    // clue boxes - diagonals
+    var col_product = 1;
+    for(var i = 1; i<=3; i++){ // top left corner diag.
+	col_product *= this.answer_boxes.getItem(i + "," + i).number;
+    }
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){ // bottom left corner diag.
+	col_product *= this.answer_boxes.getItem(i + "," + (this.rows+1-i)).number;
+    }
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){ // top right corner diag.
+        console.log("i: " + i + "  " +this.columns);
+	col_product *= this.answer_boxes.getItem((this.rows-3+i) + "," + (4-i)).number;
+    }
+    var diag3_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1) + "," + 0, diag3_clue_box ); 
+
+    col_product = 1;
+    for(var i = 1; i<=3; i++){ // bottom right corner diag.
+	col_product *= this.answer_boxes.getItem((this.rows-3+i) + "," + (this.rows-3+i)).number;
+    }
+    var diag4_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1) + "," + (this.rows+1), diag4_clue_box ); 
+
+// ******************************************************************************
+
+
+} // end of fs_puzzle_5x5
+
+
 function fs_puzzle_3x3_type2(tile_size, x_offset, y_offset, factors, canvas)
 // the factors go along the edges, and the products in the middle
 {
@@ -440,8 +579,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
  //   this.canvas = canvas;
  //   this.inputted_factors = new Array(8);
     console.log("canv width: " + canvas.width);
-    canvas.width = (this.columns+3) * tile_size;
-    canvas.height = (this.rows+4) * tile_size;
+    canvas.width = (this.columns+1) * tile_size  + 2*this.x_offset;
+    canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
     this.ctx.font = " bold " + 32 + "px Arial";
