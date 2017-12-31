@@ -30,7 +30,12 @@ function load(){
     var the_puzzle_obj = 
 // new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
 // new fs_puzzle_3x4(tile_size, offset_x, offset_y, [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
- new fs_puzzle_5x5(tile_size, offset_x, offset_y, [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], canvas);
+new fs_puzzle_5x5(tile_size, offset_x, offset_y, 
+// [1,2,3,5,7,11], 
+// [1,2,3,5,7,11,13,1,2,3],
+ [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], 
+ canvas);
+
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
@@ -41,13 +46,19 @@ function load(){
 
 // ****************************************************************
 
-function fs_puzzle(tile_size, x_offset, y_offset, factors, canvas){
+function fs_puzzle(tile_size, x_offset, y_offset, rows, columns, factors, canvas){
     this.tile_size = tile_size;
     this.x_offset = x_offset;
     this.y_offset = y_offset;
-    this.factors = factors;
-    shuffle(this.factors);
-  this.answer_boxes = new HashTable({});
+    this.rows = rows;
+    this.columns = columns;
+    all_factors = []; // get an array of factors which is big enough.
+    for(var i = 0; i< rows*columns; i++){
+        all_factors.push(factors[i % factors.length]);
+    }
+    shuffle(all_factors); // then randomize the order.
+    this.factors = all_factors;
+    this.answer_boxes = new HashTable({});
     this.clue_boxes = new HashTable({});
 
 	this.n_factors_entered = 0;
@@ -206,10 +217,8 @@ score = this.init_score +
 
 function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, canvas);
   
-    this.rows = 3; // number of rows in the answer part (inside heavy black box)
-    this.columns = 3; // number of columns in the answer part.
 this.init_score = 16; // such that if first thing you do is do ask for all clues, you will then have 0
     var spacing_factor = 1.0;
     var score_x_offset = 0.0*tile_size;
@@ -303,9 +312,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
-    this.rows = 3; // number of rows in the answer part (inside heavy black box)
-    this.columns = 4; // number of columns in the answer part.
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 4, factors, canvas);
+
   this.init_score = 28; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.0; // 0.95;
@@ -431,9 +439,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
-    this.rows = 5; // number of rows in the answer part (inside heavy black box)
-    this.columns = 5; // number of columns in the answer part.
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, canvas);
+
   this.init_score = clue_cost*24; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4;
@@ -570,9 +577,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 function fs_puzzle_5x5B(tile_size, x_offset, y_offset, factors, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
-    this.rows = 5; // number of rows in the answer part (inside heavy black box)
-    this.columns = 5; // number of columns in the answer part.
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, canvas);
+
   this.init_score = 48; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4;
@@ -711,13 +717,8 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 function fs_puzzle_3x3_type2(tile_size, x_offset, y_offset, factors, canvas)
 // the factors go along the edges, and the products in the middle
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, factors, canvas);
-  /*  this.tile_size = tile_size;
-    this.x_offset = x_offset;
-    this.y_offset = y_offset;
-    this.factors = factors; */
-    this.rows = 3;
-    this.columns = 3;
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, canvas);
+ 
     this.answer_boxes = new HashTable({});
     this.clue_boxes = new HashTable({});
     this.clues_used_box = new number_box(this.tile_size, this.x_offset + tile_size, this.y_offset + 5*tile_size, 
