@@ -1,40 +1,46 @@
-var tile_size = 64; // 120; // tile size is tile_size x tile_size pixels.
+var tile_size = 72; // 120; // tile size is tile_size x tile_size pixels.
 var offset_x_in_tiles = 1.4; //0.75; // tile_size/2; // position of puzzle bounding rectangle UL corner rel to canvas UL corner.
 var offset_y_in_tiles = 1.4; // tile_size/2;
 var heavy_line_width = 4; 
+var font_size = 28;
 
 var n_steps = 0;
 
-var clue_cost = 2;
+var clue_cost = 1;
 var wrong_cost = 1;
-var right_score = 2;
+var right_score = 1;
 
 function load(){
 
     var canvas = document.getElementById("the_canvas");
 
-    var factors = 
+  
 // [2,3,5,7,11,13,2,3]; 
 // [1,1,2,2,2,3,3,5,7]; 
 // [1,2,3,4,5,6,7,8,9]; 
 // [1,2,2,3,3,5,5,7,7];
-[1,1,2,2,3,3,5,5,7];
+// [1,1,2,2,3,3,5,5,7];
 // [2,3,4,5,6,7,8,9]; 
 // [1,2,2,3,3,5,5,7,11]; 
 // 1,2,3,5,7,11,13,2,3];   
 //    [2,2,3,3,5,5,7,11,13];
-    shuffle(factors);
+
     var offset_x = tile_size*offset_x_in_tiles;
     var offset_y = tile_size*offset_y_in_tiles;
 
     var the_puzzle_obj = 
-// new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
-// new fs_puzzle_3x4(tile_size, offset_x, offset_y, [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
-new fs_puzzle_5x5(tile_size, offset_x, offset_y, 
+// new fs_puzzle_3x3(tile_size, offset_x, offset_y, 
+// [2,3,5,1,7],
+// [1,2,3,4,5,6,7,8,9], 
+//canvas);
+new fs_puzzle_3x4(tile_size, offset_x, offset_y, 
+// [2,2,3,3,5,5,7,7,11,11,13,13], canvas);
+ [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
+//new fs_puzzle_5x5(tile_size, offset_x, offset_y, 
 // [1,2,3,5,7,11], 
 // [1,2,3,5,7,11,13,1,2,3],
- [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], 
- canvas);
+// [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], 
+// canvas);
 
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
@@ -219,7 +225,7 @@ function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, canvas);
   
-this.init_score = 16; // such that if first thing you do is do ask for all clues, you will then have 0
+this.init_score = 8*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
     var spacing_factor = 1.0;
     var score_x_offset = 0.0*tile_size;
 var score_x_position = (1 + (this.columns-1)/2)*tile_size;
@@ -241,7 +247,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
     canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
    this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 32 + "px Arial";
+    this.ctx.font = " bold " + font_size + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
@@ -314,9 +320,9 @@ function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 4, factors, canvas);
 
-  this.init_score = 28; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = 14*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
 
-    var spacing_factor = 1.0; // 0.95;
+    var spacing_factor = 1.4; // 0.95;
     var score_x_offset = 0.0*tile_size;
     var score_x_position = (1 + (this.columns-1)/2)*tile_size;
     this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
@@ -336,7 +342,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
     canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 32 + "px Arial";
+    this.ctx.font = " bold " + font_size + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
@@ -463,7 +469,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
     canvas.height = (this.rows+2) * tile_size  + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 28 + "px Arial";
+    this.ctx.font = " bold " + font_size + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
@@ -579,7 +585,7 @@ function fs_puzzle_5x5B(tile_size, x_offset, y_offset, factors, canvas)
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, canvas);
 
-  this.init_score = 48; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = 24*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4;
     var score_x_offset = 0.0*tile_size;
@@ -601,7 +607,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
     canvas.height = (this.rows+2) * tile_size  + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 32 + "px Arial";
+    this.ctx.font = " bold " + font_size + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
@@ -736,7 +742,7 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + 3*tile_size,
     canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
 
     this.ctx = canvas.getContext("2d");   
-    this.ctx.font = " bold " + 32 + "px Arial";
+    this.ctx.font = " bold " + font_size + "px Arial";
     //    console.log("font_size: " + font_size );
     console.log("ctx.font: " + this.ctx.font);
     
