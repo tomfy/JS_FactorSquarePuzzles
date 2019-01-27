@@ -10,10 +10,123 @@ var clue_cost = 1;
 var wrong_cost = 1;
 var right_score = 1;
 
+document.addEventListener('DOMContentLoaded', load);
+
+// give it 
+// 1) a set of factors, e.g. '2,2,3,3,5,5,7,11,13'
+// 2) a number of factors, e.g. 12
+// 3) a 'depth' - the maximum number of factors to go in a box
+// repeat factors to get the number requested, e.g. 2,2,3,3,5,5,7,11,13,2,2,3
+// then for a x b rectangle, and depth d, get string of a x b x d factors, by either:
+// padding with 1's (if necessary) to get enough (a x b x d), or
+// truncating to desired number (a x b x d);
+// shuffle this string of numbers and put into the boxes, ...
+
+var g_canvas;
+
+var puzzleTypes = {
+	"3x3": {c: fs_puzzle_3x3, pr: ["2,2,2,3,3,3,5", "2,3,5,7,11,13"], nf: 9},
+	"3x4": {c: fs_puzzle_3x4, pr: ["2,2,2,3,3,3,5,5,7,11"], nf: 12},
+	"5x5": {c: fs_puzzle_5x5, pr: ["2,2,2,2,2,3,3,3,3,3,5,5,5,7,7,7,11,11,13,13"], nf: 21},
+    "5x5B": {c: fs_puzzle_5x5B, pr: ["2,2,2,2,2,3,3,3,3,3,5,5,5,7,7,7,11,11,13,13"], nf: 21}
+}
+
 function load(){
+    g_canvas = document.getElementById("the_canvas");
+    var depthSelect = document.getElementById("depth");
+    var factorBox = document.getElementById("factorBox");
+    var nFactorBox = document.getElementById("nFactorBox");
+    var factorSelect = document.getElementById("factorSelect");
+    var gameTypeSelector = document.getElementById("gameType");
+    for(k in puzzleTypes) {
+        var option = document.createElement("option");
+        option.value = k;
+        option.textContent = k;
+        gameTypeSelector.appendChild(option);
+    }
+    var currentType = "3x3";
+    updatePresets(puzzleTypes[currentType]);
+    factorBox.value = puzzleTypes[currentType].pr[0];
+    console.log("Nfactors: " + puzzleTypes[currentType].nf);
+    nFactorBox.value = puzzleTypes[currentType].nf;
+    function updatePresets(puzzleType) {
+        while(depthSelect.firstChild){
+            depthSelect.removeChild(depthSelect.firstChild);
+        }
+        for(var i=1; i<=2; i++){
+            var option = document.createElement("option");
+            option.value = i;
+            option.textContent = i;
+            depthSelect.appendChild(option);
+        }
 
-    var canvas = document.getElementById("the_canvas");
+// console.log("PPPPPPPPPPP puzzleType: " + puzzleType);  
+        while(factorSelect.firstChild) {
+            factorSelect.removeChild(factorSelect.firstChild);
+        }
+        for(var i = -1; i < puzzleType.pr.length; i++) {
+            var option = document.createElement("option");
+            option.value = i;
+            option.textContent = i < 0 ? "Select..." : puzzleType.pr[i];
+            factorSelect.appendChild(option);
+        }
+    } // end of updatePresets
 
+    gameTypeSelector.addEventListener("change", function(event) {
+        var puzzleType = puzzleTypes[event.target.value];
+// console.log("xxxxxxxxxxx: " + parseInt(event.target.value) + "  " + event.target.value);
+        currentType = event.target.value;
+        updatePresets(puzzleType);
+    });
+    factorSelect.addEventListener("change", function(event) {
+        var h = parseInt(event.target.value);
+   //      console.log("hhhhhhhhhhhhhhhhhhhhhh: " + h);
+        if (h < 0) return;
+        factorBox.value = puzzleTypes[currentType].pr[h];
+ //        console.log("yyyyyyyyy: " + puzzleTypes[currentType].c);
+   //       console.log("zzzzzzzzzz: " + factorBox.value);
+    });
+    var startButton = document.getElementById("buttonStart");
+    function startGame() {
+        var puzzleType = puzzleTypes[gameTypeSelector.value];
+        var factorText = factorBox.value;
+        console.log("puzzleType: " + puzzleType.c + "  factorText: " + factorText);
+        if (factorText.length == 0) {
+            alert("No factors entered!");
+            return;
+        }
+        var factors = factorText.split(/,\s*/).map(function(x) { return parseInt(x) }); // 
+        if(factors.length == 0 || factors.map(function(x) { return x != x }).includes(true)) {
+            alert("Invalid factors!");
+            return;
+        }
+        location.hash = '#type=' + gameTypeSelector.value + '&f=' + btoa(factorText);
+
+        var depth = 2;
+        switchToPuzzle(puzzleType.c, factors, nFactorBox.value, depth);
+    }
+
+    startButton.addEventListener("click", function(event) {
+        startGame();
+    });
+
+    if(location.hash.length > 0) {
+        var settings = {};
+        var spl = location.hash.substr(1).split("&");
+        for(var i = 0; i < spl.length; i++) {
+            console.log("spl[i]: " + spl[i]);
+            var spl2 = spl[i].split("=");
+            console.log("spl2:  " + spl2);
+            settings[spl2[0]] = spl2[1];
+        }
+        gameTypeSelector.value = settings.type;
+        factorBox.value = atob(settings.f);
+        startGame();
+    }
+
+} // end of load
+
+function switchToPuzzle(puzzle_constructor, factors, n_factors, depth) {
   
 // [2,3,5,7,11,13,2,3]; 
 // [1,1,2,2,2,3,3,5,7]; 
@@ -28,40 +141,44 @@ function load(){
     var offset_x = tile_size*offset_x_in_tiles;
     var offset_y = tile_size*offset_y_in_tiles;
 
-    var the_puzzle_obj = 
-// new fs_puzzle_3x3(tile_size, offset_x, offset_y, 
-// [2,3,5,1,7],
-// [1,2,3,4,5,6,7,8,9], 
-//canvas);
-new fs_puzzle_3x4(tile_size, offset_x, offset_y, 
+    var the_puzzle_obj = new puzzle_constructor(tile_size, offset_x, offset_y, factors, n_factors, depth, g_canvas);
+//    var the_puzzle_obj = 
+//        new fs_puzzle_3x3(tile_size, offset_x, offset_y, [1,2,3,4,5,6,7,8,9], canvas);
+
+ //   new fs_puzzle_3x4(tile_size, offset_x, offset_y,  [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
 // [2,2,3,3,5,5,7,7,11,11,13,13], canvas);
- [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
-//new fs_puzzle_5x5(tile_size, offset_x, offset_y, 
-// [1,2,3,5,7,11], 
-// [1,2,3,5,7,11,13,1,2,3],
-// [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], 
-// canvas);
+// [1,1,2,2,3,3,5,5,7,7,11,13], canvas);
+//    new fs_puzzle_5x5(tile_size, offset_x, offset_y, [1,1,1,1,2,2,2,2,2,3,3,3,3,5,5,5,5,7,7,7,11,11,11,13,13], canvas);
 
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
-    canvas.onclick = function(event){handle_canvas_click(event, canvas, the_puzzle_obj)};
-    canvas.oncontextmenu = function(event){handle_canvas_click(event, canvas, the_puzzle_obj)};   
+    g_canvas.onmousedown = function(event) { if('which' in event ? event.which == 3 : event.button == 2) { handle_canvas_click(event, g_canvas, the_puzzle_obj, true) } }
+    g_canvas.onclick = function(event){console.log('click'); handle_canvas_click(event, g_canvas, the_puzzle_obj, false)};
+    g_canvas.oncontextmenu = function(event) { event.preventDefault(); return false } //function(event){handle_canvas_click(event, g_canvas, the_puzzle_obj)};   
     
 } // end of function load
 
 // ****************************************************************
 
-function fs_puzzle(tile_size, x_offset, y_offset, rows, columns, factors, canvas){
+function fs_puzzle(tile_size, x_offset, y_offset, rows, columns, factors, n_factors, depth, canvas){
     this.tile_size = tile_size;
     this.x_offset = x_offset;
     this.y_offset = y_offset;
     this.rows = rows;
     this.columns = columns;
     all_factors = []; // get an array of factors which is big enough.
-    for(var i = 0; i< rows*columns; i++){
+    for(var i = 0; i< n_factors; i++){
         all_factors.push(factors[i % factors.length]);
     }
+    var N = rows * columns * depth;
+    while(all_factors.length < N){  // pad with 1's
+        all_factors.push(1);
+    }
+    if(all_factors.length > N){
+        all_factors.length = N; //  = all_factors.slice(0,N); 
+    }
+    console.log("all factors: " + all_factors);
     shuffle(all_factors); // then randomize the order.
     this.factors = all_factors;
     this.answer_boxes = new HashTable({});
@@ -221,9 +338,9 @@ score = this.init_score +
 
 }
 
-function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, canvas)
+function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, canvas);
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, n_factors, depth, canvas);
   
 this.init_score = 8*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
     var spacing_factor = 1.0;
@@ -262,10 +379,14 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 	for(var j=1; j<=this.columns; j++){
 	    var key = j + "," + i;
 	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
-	    
+	//    var the_factor = this.factors[factor_index];
+            var the_answer_number = 1;
+	    for(var k = 0; k<depth; k++){
+                the_answer_number *= this.factors[factor_index + k*this.rows*this.columns];
+            }
 	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
+					    //  the_factor, 
+                                                the_answer_number, false, canvas, this);
 	    this.answer_boxes.setItem(key, the_answer_box ); 
 	}
     }
@@ -316,9 +437,9 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 } // end of fs_puzzle_3x3
 
-function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, canvas)
+function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 4, factors, canvas);
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 4, factors, n_factors, depth, canvas);
 
   this.init_score = 14*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
 
@@ -357,10 +478,14 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 	for(var j=1; j<=this.columns; j++){
 	    var key = j + "," + i;
 	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
-	    
+	//    var the_factor = this.factors[factor_index];
+            var the_answer_number = 1;
+	    for(var k = 0; k<depth; k++){
+                the_answer_number *= this.factors[factor_index + k*this.rows*this.columns];
+            }
 	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
+					    //  the_factor, 
+                                                the_answer_number, false, canvas, this);
 	    this.answer_boxes.setItem(key, the_answer_box ); 
 	}
     }
@@ -443,9 +568,11 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 } // end of fs_puzzle_3x4
 
 
-function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, canvas)
+// 5x5 with 5 clues on each side which are products of 3 in a row or column,
+// plus 4 diagonals in corners.
+function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, canvas);
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, n_factors, depth, canvas);
 
   this.init_score = clue_cost*24; // such that if first thing you do is do ask for all clues, you will then have 0
 
@@ -484,10 +611,18 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 	for(var j=1; j<=this.columns; j++){
 	    var key = j + "," + i;
 	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
+	  //  var the_factor = this.factors[factor_index];
 	    
+	//    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+			//		      the_factor, false, canvas, this);
+
+   var the_answer_number = 1;
+	    for(var k = 0; k<depth; k++){
+                the_answer_number *= this.factors[factor_index + k*this.rows*this.columns];
+            }
 	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
+					    //  the_factor, 
+                                                the_answer_number, false, canvas, this);
 	    this.answer_boxes.setItem(key, the_answer_box ); 
 	}
     }
@@ -580,12 +715,12 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 
 } // end of fs_puzzle_5x5
 
-
-function fs_puzzle_5x5B(tile_size, x_offset, y_offset, factors, canvas)
+// 5x5 with each side having 3 row/column clues and 3 diagonal clues (including corners).
+function fs_puzzle_5x5B(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
 {
-    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, canvas);
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, n_factors, depth, canvas);
 
-  this.init_score = 24*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = 24*clue_cost; // such that if first thing you do is do ask for all clues, you will then have a score of 0
 
     var spacing_factor = 1.4;
     var score_x_offset = 0.0*tile_size;
@@ -622,10 +757,17 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 	for(var j=1; j<=this.columns; j++){
 	    var key = j + "," + i;
 	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
-	    var the_factor = this.factors[factor_index];
+//	    var the_factor = this.factors[factor_index];
 	    
+//	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, the_factor, false, canvas, this);
+
+   var the_answer_number = 1;
+	    for(var k = 0; k<depth; k++){
+                the_answer_number *= this.factors[factor_index + k*this.rows*this.columns];
+            }
 	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
-					      the_factor, false, canvas, this);
+					    //  the_factor, 
+                                                the_answer_number, false, canvas, this);
             this.answer_boxes.setItem(key, the_answer_box ); 
 	}
     }
@@ -679,40 +821,55 @@ this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offs
 	console.log("after the_box.show()");
 	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
     }
+
     // clue boxes - diagonals
-    var col_product = 1;
-    for(var i = 1; i<=3; i++){ // top left corner diag.
-	col_product *= this.answer_boxes.getItem(i + "," + i).number;
+    var diag_product = 1;
+    // top left diagonals:
+    for(var ix = 0; ix<3; ix++){ // Top edge, L to R
+        diag_product = 1;
+    for(var iy = 1; iy<=3; iy++){ // top down.
+        console.log("ix, iy, number: " + ix + "  " + iy + " " + this.answer_boxes.getItem(ix + iy + "," + iy).number);
+	diag_product *= this.answer_boxes.getItem(ix + iy + "," + iy).number;
     }
-    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset + ix*this.tile_size, this.y_offset, 
+				      diag_product, false, canvas, this);
+    this.clue_boxes.setItem( ix + "," + 0, diag1_clue_box ); 
 
-    col_product = 1;
-    for(var i = 1; i<=3; i++){ // bottom left corner diag.
-	col_product *= this.answer_boxes.getItem(i + "," + (this.rows+1-i)).number;
     }
-    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
 
-    col_product = 1;
-    for(var i = 1; i<=3; i++){ // top right corner diag.
-        console.log("i: " + i + "  " +this.columns);
-	col_product *= this.answer_boxes.getItem((this.rows-3+i) + "," + (4-i)).number;
+    for(var iy = 0; iy<3; iy++){ // L edge, bottom up
+        diag_product = 1;
+    for(var ix = 1; ix<=3; ix++){ // L to R
+	diag_product *= this.answer_boxes.getItem(ix + "," + (this.rows+1 - ix - iy)).number;
     }
-    var diag3_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( (this.columns+1) + "," + 0, diag3_clue_box ); 
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1 - iy)*tile_size + this.y_offset, 
+				      diag_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + (this.rows+1 - iy), diag2_clue_box ); 
+}
 
-    col_product = 1;
-    for(var i = 1; i<=3; i++){ // bottom right corner diag.
-	col_product *= this.answer_boxes.getItem((this.rows-3+i) + "," + (this.rows-3+i)).number;
+   for(var iy = 0; iy<3; iy++){ // R edge, top down.
+    diag_product = 1;
+    for(var ix = 1; ix<=3; ix++){ // R to L
+     //   console.log("i: " + i + "  " +this.columns);
+    //    console.log("this.rows: " + this.rows + " " + ix + " " + iy);
+	diag_product *= this.answer_boxes.getItem((this.rows+1 - ix) + "," + (ix+iy)).number;
     }
-    var diag4_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1)*tile_size, (this.rows+1)*tile_size + this.y_offset, 
-				      col_product, false, canvas, this);
-    this.clue_boxes.setItem( (this.columns+1) + "," + (this.rows+1), diag4_clue_box ); 
+    var diag3_clue_box = new number_box(this.tile_size, 
+                                        this.x_offset + (this.columns+1)*tile_size, this.y_offset
+                                        + iy*this.tile_size, 
+				        diag_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1) + "," + iy, diag3_clue_box ); 
+}
 
+  for(var ix = 0; ix<3; ix++){ // bottom edge, R to L
+    diag_product = 1;
+    for(var iy = 1; iy<=3; iy++){ // bottom up.
+	diag_product *= this.answer_boxes.getItem((this.rows-3+iy-ix) + "," + (this.rows-3+iy)).number;
+    }
+    var diag4_clue_box = new number_box(this.tile_size, this.x_offset + (this.columns+1 - ix)*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+				      diag_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.columns+1 - ix) + "," + (this.rows+1), diag4_clue_box ); 
+}
 // ******************************************************************************
 
 
@@ -872,7 +1029,7 @@ console.log("text_show: ", this.text_shown);
 	ac.style.width = Math.floor(width_coeff*box_size) + "px";
 	ac.type = "text";
 	ac.style.size = 1; // Math.floor(0.1*box_size)
-	ac.className = "text";
+	ac.className = "numberEntry";
 	ac.value = '';
 
 	ac.addEventListener("keypress", function(event){
@@ -903,8 +1060,10 @@ the_box.count_inputs++;
 	ac.style.fillStyle = "#880000"; //red; //green; // "#008800";
 	console.log(ac.style.font);
 	console.log("ac.style.font: " + ac.style.font);
-	ac.style.top = (this.y_offset + canvas_margin_etc + 0.28*this.box_size ) + "px";
-	ac.style.left = (this.x_offset + canvas_margin_etc + (0.58 - width_coeff/2)*this.box_size ) + "px"
+
+    var boundingRect = canvas.getBoundingClientRect();
+	ac.style.top = (this.y_offset + window.scrollY + boundingRect.top + 0.28*this.box_size ) + "px";
+	ac.style.left = (this.x_offset + window.scrollX + boundingRect.left + (0.48 - width_coeff/2)*this.box_size ) + "px"
 	ac.value = the_box.user_input_value || '';
 	document.body.appendChild(ac);
 	ac.select()
@@ -912,24 +1071,21 @@ the_box.count_inputs++;
     }
 }
 
-function handle_canvas_click(event, canvas, puzzle_obj){
+function handle_canvas_click(event, canvas, puzzle_obj, is_rightclick){
     console.log("puzzleobj tilesize: " + puzzle_obj.tile_size);
-    var canvas_margin_etc = 
-	parseFloat(canvas.style.margin) + 
-	parseFloat(canvas.style.padding) + 
-	parseFloat(canvas.style.border); // assuming all 4 margins, etc. are equal
+    var boundingRect = canvas.getBoundingClientRect();
+
 
     // use event.pageX to get position relative to the upper left hand corner of page. clientX gives coords rel to 
     // upper left corner of visible area of window. So if there is, for example, a word which moves up and down as you scroll
     // clientX when you click on that word will change as you scroll, but pageX when you click on that word will be the same.
 
 
-    this.x = event.pageX - canvas_margin_etc; // location of mouse click in canvas coords
-    this.y = event.pageY - canvas_margin_etc;
+    var x = event.clientX - boundingRect.left; // location of mouse click in canvas coords
+    var y = event.clientY - boundingRect.top;
     console.log("mouse x,y rel to canvas UL corner: " + this.x + " " + this.y);
-    this.puzzle_obj = puzzle_obj;
-    var dx0 = (this.x - (puzzle_obj.x_offset + 0.5*tile_size)); // distance from center of first square
-    var dy0 = (this.y - (puzzle_obj.y_offset + 0.5*tile_size));
+    var dx0 = (x - (puzzle_obj.x_offset + 0.5*tile_size)); // distance from center of first square
+    var dy0 = (y - (puzzle_obj.y_offset + 0.5*tile_size));
     
     var ix =  Math.round(dx0/tile_size);
     var iy =  Math.round(dy0/tile_size);
@@ -942,12 +1098,12 @@ function handle_canvas_click(event, canvas, puzzle_obj){
     //    ctx.fillText(ix+','+iy , this.x, this.y);
     console.log("ix: " + ix + "; iy: " + iy);
     console.log("event type: " + event.type);
-    if(event.type == 'contextmenu'){
-	event.preventDefault();
+    console.log('btn', event.button);
+    if(is_rightclick){
 	puzzle_obj.hide_box_text(ix, iy);
 	puzzle_obj.show_box_number(ix, iy);
 	puzzle_obj.update_score();
-    }else if(event.type == 'click'){
+    }else{
 	if(puzzle_obj.box_text_shown(ix, iy) != 'answer_number'){ // if click on anything besides answer_number, show input box:
 	puzzle_obj.input_box_number(ix, iy);
     }
