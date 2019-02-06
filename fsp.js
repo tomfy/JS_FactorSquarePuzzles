@@ -6,8 +6,9 @@ var font_size = 28;
 
 var n_steps = 0;
 
-var clue_cost = 1;
-var wrong_cost = 1;
+var product_clue_cost = 1;
+var factor_clue_cost = 2;
+var wrong_cost = 2;
 var right_score = 1;
 
 document.addEventListener('DOMContentLoaded', load);
@@ -25,6 +26,7 @@ document.addEventListener('DOMContentLoaded', load);
 var g_canvas;
 
 var puzzleTypes = {
+        "2x3": {c: fs_puzzle_2x3, pr: ["2,3,5,7,11,2", "2,3,5,7,11,13"], nf: 6},
 	"3x3": {c: fs_puzzle_3x3, pr: ["2,2,2,3,3,3,5", "2,3,5,7,11,13"], nf: 9},
 	"3x4": {c: fs_puzzle_3x4, pr: ["2,2,2,3,3,3,5,5,7,11"], nf: 12},
 	"5x5": {c: fs_puzzle_5x5, pr: ["2,2,2,2,2,3,3,3,3,3,5,5,5,7,7,7,11,11,13,13"], nf: 21},
@@ -45,6 +47,7 @@ function load(){
         gameTypeSelector.appendChild(option);
     }
     var currentType = "3x3";
+    var currentDepth = 1;
     updatePresets(puzzleTypes[currentType]);
     factorBox.value = puzzleTypes[currentType].pr[0];
     console.log("Nfactors: " + puzzleTypes[currentType].nf);
@@ -78,6 +81,13 @@ function load(){
         currentType = event.target.value;
         updatePresets(puzzleType);
     });
+   depthSelect.addEventListener("change", function(event) {
+       // var puzzleType = puzzleTypes[event.target.value];
+// console.log("xxxxxxxxxxx: " + parseInt(event.target.value) + "  " + event.target.value);
+        currentDepth = event.target.value;
+      //  updatePresets(puzzleType);
+    });
+    
     factorSelect.addEventListener("change", function(event) {
         var h = parseInt(event.target.value);
    //      console.log("hhhhhhhhhhhhhhhhhhhhhh: " + h);
@@ -102,7 +112,7 @@ function load(){
         }
         location.hash = '#type=' + gameTypeSelector.value + '&f=' + btoa(factorText);
 
-        var depth = 2;
+        var depth = currentDepth;
         switchToPuzzle(puzzleType.c, factors, nFactorBox.value, depth);
     }
 
@@ -251,10 +261,10 @@ if(this.answer_boxes.items[box_coord].text_shown == 'answer_number'){
 score = this.init_score + 
             (right_score + wrong_cost)*this.n_correct_factors 
 	    - wrong_cost*this.n_factors_entered 
-	    - clue_cost*this.n_factor_clues_used 
+	    - factor_clue_cost*this.n_factor_clues_used 
 	    + (right_score + wrong_cost)*this.n_correct_products 
 	    - wrong_cost*this.n_products_entered 
-	    - (clue_cost)*this.n_product_clues_used;
+	    - (product_clue_cost)*this.n_product_clues_used;
 
 	this.clues_used_box.number = this.n_product_clues_used + this.n_factor_clues_used;
 	this.n_correct_box.number = this.n_correct_factors + this.n_correct_products;
@@ -338,11 +348,145 @@ score = this.init_score +
 
 }
 
+function fs_puzzle_2x3(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
+{
+    fs_puzzle.call(this, tile_size, x_offset, y_offset, 2, 3, factors, n_factors, depth, canvas);
+  
+this.init_score = 10*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
+    var spacing_factor = 1.0;
+    var score_x_offset = 0.0*tile_size;
+var score_x_position = (1 + (this.columns-1)/2)*tile_size;
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+					0, false, canvas, this);
+ this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset, 
+					0, false, canvas, this);
+ //this.score_box = new number_box(this.tile_size, this.x_offset + 3*tile_size, this.y_offset, 
+//					0, false, canvas, this);
+   // this.canvas = canvas;
+
+//  this.inputted_factors = new Array(8);
+    console.log("canv width: " + canvas.width);
+    canvas.width = (this.columns+1) * tile_size + 2*this.x_offset;
+    canvas.height = (this.rows+2) * tile_size + 2*this.y_offset;
+
+   this.ctx = canvas.getContext("2d");   
+    this.ctx.font = " bold " + font_size + "px Arial";
+    //    console.log("font_size: " + font_size );
+    console.log("ctx.font: " + this.ctx.font);
+    
+    this.ctx.textAlign="center";
+    this.ctx.textBaseline="middle";
+ 
+    //    this.answers = new Array();
+    console.log(this);
+    // 2x3 answer boxes.
+    for(var i=1; i<=this.rows; i++){
+	//	this.answers[i] = new Array();
+	for(var j=1; j<=this.columns; j++){
+	    var key = j + "," + i;
+	    var factor_index = (this.columns*(i-1) + (j-1)) % this.factors.length;
+	//    var the_factor = this.factors[factor_index];
+            var the_answer_number = 1;
+	    for(var k = 0; k<depth; k++){
+                the_answer_number *= this.factors[factor_index + k*this.rows*this.columns];
+            }
+	    var the_answer_box = new number_box(this.tile_size, this.x_offset + j*tile_size, this.y_offset + i*tile_size, 
+					    //  the_factor, 
+                                                the_answer_number, false, canvas, this);
+	    this.answer_boxes.setItem(key, the_answer_box ); 
+	}
+    }
+    
+    // clue boxes - rows
+    // left side row clues:
+    for(var i=1; i<=this.rows; i++){
+	var row_product = 1;
+	for(var j=1; j<=this.columns; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( 0 + "," + i, the_clue_box ); 
+    }
+    // right side row clues
+   for(var i=1; i<=this.rows; i++){
+	var row_product = 1;
+	for(var j=1; j<=this.columns; j++){
+	    var abox = this.answer_boxes.getItem(j + "," + i);
+	    row_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size, this.x_offset + (this.cols+1)*tile_size, this.y_offset + i*tile_size, 
+					row_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( (this.cols+1) + "," + i, the_clue_box ); 
+    }
+    // clue boxes - columns
+    for(var i=1; i<=this.columns; i++){
+	var col_product = 1;
+	for(var j=1; j<=this.rows; j++){
+	    var abox = this.answer_boxes.getItem(i + "," + j);
+	    col_product *= abox.number;
+	}
+	var the_clue_box = new number_box(this.tile_size,
+					this.x_offset + i*tile_size, (this.rows+1)*tile_size + this.y_offset, 
+					col_product, false, canvas, this);
+	//   the_box.show();
+	console.log("after the_box.show()");
+	this.clue_boxes.setItem( i + "," + (this.rows+1), the_clue_box ); 
+    }
+    // clue boxes - diagonals
+// Top left diag:
+    var col_product = 1;
+    for(var i = 1; i<=2; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + i).number;
+    }
+    var diag1_clue_box = new number_box(this.tile_size, this.x_offset, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + 0, diag1_clue_box ); 
+
+// Bottom left diag:
+    col_product = 1;
+    for(var i = 1; i<=2; i++){
+	col_product *= this.answer_boxes.getItem(i + "," + (3-i)).number;
+    }
+    var diag2_clue_box = new number_box(this.tile_size, this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( 0 + "," + (this.rows+1), diag2_clue_box ); 
+
+// Top right diag:
+    col_product = 1;
+    for(var i = 1; i<=2; i++){
+	col_product *= this.answer_boxes.getItem((4-i) + "," + i).number;
+    }
+    var diag3_clue_box = new number_box(this.tile_size, (this.cols+1)*tile_size + this.x_offset, this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.cols+1) + "," + 0, diag3_clue_box ); 
+
+// Bottom right diag:
+    col_product = 1;
+    for(var i = 1; i<=2; i++){
+	col_product *= this.answer_boxes.getItem((4-i) + "," + (3-i)).number;
+    }
+    var diag4_clue_box = new number_box(this.tile_size, (this.cols+1)*tile_size + this.x_offset, (this.rows+1)*tile_size + this.y_offset, 
+				      col_product, false, canvas, this);
+    this.clue_boxes.setItem( (this.cols+1) + "," + (this.rows+1), diag4_clue_box ); 
+// ******************************************************************************
+
+} // end of fs_puzzle_2x3
+
 function fs_puzzle_3x3(tile_size, x_offset, y_offset, factors, n_factors, depth, canvas)
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 3, factors, n_factors, depth, canvas);
   
-this.init_score = 8*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
+this.init_score = 8*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
     var spacing_factor = 1.0;
     var score_x_offset = 0.0*tile_size;
 var score_x_position = (1 + (this.columns-1)/2)*tile_size;
@@ -441,7 +585,7 @@ function fs_puzzle_3x4(tile_size, x_offset, y_offset, factors, n_factors, depth,
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 3, 4, factors, n_factors, depth, canvas);
 
-  this.init_score = 14*clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = 14*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4; // 0.95;
     var score_x_offset = 0.0*tile_size;
@@ -574,7 +718,7 @@ function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, n_factors, depth,
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, n_factors, depth, canvas);
 
-  this.init_score = clue_cost*24; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = product_clue_cost*24; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4;
     var score_x_offset = 0.0*tile_size;
@@ -720,7 +864,7 @@ function fs_puzzle_5x5B(tile_size, x_offset, y_offset, factors, n_factors, depth
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, n_factors, depth, canvas);
 
-  this.init_score = 24*clue_cost; // such that if first thing you do is do ask for all clues, you will then have a score of 0
+  this.init_score = 24*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have a score of 0
 
     var spacing_factor = 1.4;
     var score_x_offset = 0.0*tile_size;
