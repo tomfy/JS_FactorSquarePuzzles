@@ -1,0 +1,54 @@
+Ideas:
+Set the maximum number of various factors. 
+E.g. perhaps you'd set maxes of 
+2 1's, 3 2's, 2 3's, 2 5's, 1 7, 1 11, 1 13.
+The total of these is 12, so if filling a 3x3
+you would start with the array (1,1,2,2,2,3,3,5,5,7,11,13)
+shuffle it and take the first 9 to fill the 9 spaces of the square.
+
+Specify a max depth (max number of prime factors in a box), total number of prime factors
+e.g. max depth 2, total number of prime factors 12, in a 3x3 square, 
+prime factors 2,2,2,2,3,3,3,5,5,7,11,13
+add 6 ones: (1,1,1,1,1,1, 2,2,2,2,3,3,3, 5,5,7,11,13)
+shuffle, and put in square in order
+e.g. if shuffled array is (
+1,2,2, 5,7,1, 11,13,1,  
+1,3,5, 1,3,2, 2,1,3)
+
+then square would contain number
+1x1    2x3    2x5
+5x1    7x3    1x2
+11x2   13x1   1x3
+
+or
+
+1   6   10
+5   21  2
+22  13  3
+
+  63
+  60   ?    ?    ?
+ 210   ?    ?    ?
+ 858   ?    ?    ?
+4620  110 1638  60
+
+which is hard - perhaps not a unique solution.
+how about if we have only 10 prime factors:
+2,2,2,3,3,5,5,7,11,13
+add 8 1's, shuffle, etc.:
+2,1,7  3,11,1  1,1,5
+2,1,13  2,5,1  3,1,1  
+
+2x2    1x1    7x13
+3x2    11x5   1x1
+1x3    1x1    5x1
+
+ 6    1    91
+ 6    55   1
+ 3    1    5
+
+ 1650
+  546   ?    ?    ?
+  330   ?    ?    ?
+   15   ?    ?    ?
+15015  108  55   455
