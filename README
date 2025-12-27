@@ -15,5 +15,5 @@ all possible clues (on the outside, i.e. the products of the rows, columns,
 and diagonals), you will start with a score of 0. So, for example, for a 3x3 puzzle 
 there are 8 clues and the initial
 score (before asking for any clues) would be 8. Correct answers are worth
-1 point. Wrong answers cost 1 point, but after you have entered the correct answer
+1 point. Wrong answers cost 2 points, but after you have entered the correct answer
 in a square, if you then enter a wrong answer in the same square, it costs 4 points.
