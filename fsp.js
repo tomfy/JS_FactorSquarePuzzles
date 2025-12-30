@@ -163,7 +163,8 @@ function switchToPuzzle(puzzle_constructor, factors, n_factors, depth) {
 // new fs_puzzle_3x3_type2(tile_size, offset_x, offset_y, factors, canvas);
     the_puzzle_obj.display();
     the_puzzle_obj.update_score();
-    g_canvas.onmousedown = function(event) { if('which' in event ? event.which == 3 : event.button == 2) { handle_canvas_click(event, g_canvas, the_puzzle_obj, true) } }
+    g_canvas.onmousedown = function(event) {
+	if('which' in event ? event.which == 3 : event.button == 2) { handle_canvas_click(event, g_canvas, the_puzzle_obj, true) } }
     g_canvas.onclick = function(event){console.log('click'); handle_canvas_click(event, g_canvas, the_puzzle_obj, false)};
     g_canvas.oncontextmenu = function(event) { event.preventDefault(); return false } //function(event){handle_canvas_click(event, g_canvas, the_puzzle_obj)};   
     
@@ -242,13 +243,16 @@ function fs_puzzle(tile_size, x_offset, y_offset, rows, columns, factors, n_fact
 		if(this.answer_boxes.items[box_coord].number == this.answer_boxes.items[box_coord].user_input_value){
 		    this.n_correct_factors++;
 		}
-if(this.answer_boxes.items[box_coord].text_shown == 'answer_number'){
+		if(this.answer_boxes.items[box_coord].text_shown == 'answer_number'){
 		    this.n_factor_clues_used++;
 		}
 	    }
 	}
 	console.log("puzzle factors entered: " + this.n_factors_entered + ". correct factors entered: " + this.n_correct_factors + ". factor clues used: " + this.n_factor_clues_used);
-// revealing a clue -2 pts, right answer +2 points, wrong answer -1 point.
+	// revealing a clue -2 pts, right answer +2 points, wrong answer -1 point.
+	console.log(this.init_score + "  " +
+		    this.n_correct_factors + " " + this.n_factors_entered + " " + this.n_factor_clues_used + "  " +
+		    this.n_correct_products + " " + this.n_products_entered + " " + this.n_product_clues_used);
 	var score = this.init_score +
 	    3*this.n_correct_factors 
 	    - this.n_factors_entered 
@@ -270,7 +274,7 @@ score = this.init_score +
 	this.n_correct_box.number = this.n_correct_factors + this.n_correct_products;
 	this.n_wrong_box.number = this.n_factors_entered + this.n_products_entered - this.n_correct_box.number;
 	this.score_box.number = score;
-	this.clues_used_box.update_number();
+	this.clues_used_box.update_number(); // update the numbers showing 
 	this.n_wrong_box.update_number();
 	this.n_correct_box.update_number();
 	this.score_box.update_number();
@@ -290,13 +294,11 @@ score = this.init_score +
 	    if (this.answer_boxes.hasItem(box_coord)) {
 		this.answer_boxes.items[box_coord].show_box();
 	    }
-	}
-	
+	}	
     }
 
     this.show_box_number = function(ix, iy){
 	var box_coord = ix + ',' + iy;
-	console.log("top of show_a_box");
 	if(this.clue_boxes.hasItem(box_coord)){	    
 	    var abox = this.clue_boxes.items[box_coord];
 	    abox.text_shown = 'answer_number';
@@ -352,15 +354,15 @@ function fs_puzzle_2x3(tile_size, x_offset, y_offset, factors, n_factors, depth,
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 2, 3, factors, n_factors, depth, canvas);
   
-this.init_score = 10*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
+this.init_score = 7*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
     var spacing_factor = 1.0;
     var score_x_offset = 0.0*tile_size;
 var score_x_position = (1 + (this.columns-1)/2)*tile_size;
-    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+    this.clues_used_box = new number_box(this.tile_size, this.x_offset + score_x_offset + spacing_factor*tile_size,
+					 this.y_offset + 4*this.tile_size,   0, false, canvas, this);
+ this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 4*this.tile_size, 
 					0, false, canvas, this);
- this.n_wrong_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 2*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
-					0, false, canvas, this);
-this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 5*this.tile_size, 
+this.n_correct_box = new number_box(this.tile_size, this.x_offset + score_x_offset + 3*spacing_factor*tile_size, this.y_offset + 4*this.tile_size, 
 					0, false, canvas, this);
  this.score_box = new number_box(this.tile_size, this.x_offset + score_x_offset + score_x_position, this.y_offset, 
 					0, false, canvas, this);
@@ -718,7 +720,7 @@ function fs_puzzle_5x5(tile_size, x_offset, y_offset, factors, n_factors, depth,
 {
     fs_puzzle.call(this, tile_size, x_offset, y_offset, 5, 5, factors, n_factors, depth, canvas);
 
-  this.init_score = product_clue_cost*24; // such that if first thing you do is do ask for all clues, you will then have 0
+  this.init_score = 24*product_clue_cost; // such that if first thing you do is do ask for all clues, you will then have 0
 
     var spacing_factor = 1.4;
     var score_x_offset = 0.0*tile_size;
@@ -1117,31 +1119,37 @@ function number_box(box_size, x_offset, y_offset, number, text_shown, canvas, pu
     this.text_y = this.y_offset + (0.5 - 0.0)*this.box_size;
 
     this.show_box = function(){ // show the box, with text specified by text_shown
+	//console.log("show_box  text_shown: ", this.text_shown, this.number);
 	this.ctx.strokeStyle = "#000000";
 	this.ctx.strokeRect( this.x_offset, this.y_offset, this.box_size, this.box_size);
 	if(this.text_shown == 'answer_number'){
 	    this.ctx.fillStyle = "#000000";
 	    this.ctx.fillText(this.number, this.text_x, this.text_y);
 	}else if(this.text_shown == 'user_input_correct'){
-console.log("text_shown: ", this.text_shown);
+console.log("UIC text_shown: ", this.text_shown, this.user_input_value);
 	    this.ctx.fillStyle = "#000000";
 	    this.ctx.fillText(this.user_input_value, this.text_x, this.text_y);
 	}else if(this.text_shown == 'user_input_wrong'){
-console.log("text_shown: ", this.text_shown);
+	    console.log("UIW text_shown: ", this.text_shown, this.user_input_value);
 	    this.ctx.fillStyle = "#000000";
 	    this.ctx.fillText(this.user_input_value, this.text_x, this.text_y);
 	}
     }
     this.show_number = function (){ // show the number and set text_shown to 'answer_number'
+		//console.log("show_number  text_shown: ", this.text_shown, this.number);
 	this.ctx.fillStyle = "#000000";
 	this.ctx.fillText(this.number, this.text_x, this.text_y);
 	this.text_shown = 'answer_number';
     }
     this.update_number = function(){ // erase text, then show number
+	//console.log("update_number  text_shown: ", this.text_shown, this.number);
 	this.hide_text();
 	this.show_number();
     }
     this.show_input_value = function (){ // write the user-input value on the canvas
+	console.log("text_shown:  ", this.text_shown);
+	if(this.text_shown != 'answer_number'){
+	    console.log("QQQ: show_input_value  text_shown: ", this.text_shown, this.user_input_value);
 	if(this.number == this.user_input_value){ // value entered is correct -> green
 	    this.text_shown = 'user_input_correct';       
             this.ctx.fillStyle = green; // "#00A000";
@@ -1150,10 +1158,11 @@ console.log("text_shown: ", this.text_shown);
             this.ctx.fillStyle = red; // "#00A000";
         }
 	this.ctx.fillText(this.user_input_value, this.text_x, this.text_y);
-console.log("text_show: ", this.text_shown);
+	    console.log("text_shown: ", this.text_shown);
+	}
     }
     this.hide_text = function(){ // hide the text 
-	console.log("In number_box.hid.");
+	//console.log("In number_box.hid.");
 	this.ctx.strokeStyle = "#FFFFFF";
 	this.ctx.fillStyle = "#FFFFFF";
 	this.ctx.fillRect( this.x_offset+5, this.y_offset+5, this.box_size-10, this.box_size-10);
@@ -1185,19 +1194,21 @@ console.log("text_show: ", this.text_shown);
 	    }
 	}, false);
 	ac.addEventListener("blur", function(){
-	    console.log("old/new values: " + the_box.user_input_value + "; " + this.value);
+	    console.log("blur  old/new input values: ", the_box.user_input_value, "; " + this.value);
 	  //  console.log("this: " + this);
 	    if(this.value != the_box.user_input_value){
 		console.log("AAAAAAAAA: " + the_box.user_input_value);
 //		if(1 or this.value != ''){ 
-the_box.count_inputs++; 
+		the_box.count_inputs++; 
 //}
 		the_box.user_input_value = this.value;
 	    }
 	    console.log("count_inputs: " + the_box.count_inputs);
 	    document.body.removeChild(ac);
 	    the_box.show_input_value();
+	    console.log("AAA");
 	    puzzle.update_score(); // 4*n_right_factor_answers + 2*n_right_clue_answers - (3*n_clues_shown + 2*n_answersinput + n_clues_input)
+	    console.log("BBB after update_score 'blur' ");
 	}, false);
 	
 	ac.style.font = " bold " + this.ctx.font; // font_size + " px Arial";
@@ -1227,6 +1238,7 @@ function handle_canvas_click(event, canvas, puzzle_obj, is_rightclick){
 
     var x = event.clientX - boundingRect.left; // location of mouse click in canvas coords
     var y = event.clientY - boundingRect.top;
+    console.log("x, y: " + x + " " + y );
     console.log("mouse x,y rel to canvas UL corner: " + this.x + " " + this.y);
     var dx0 = (x - (puzzle_obj.x_offset + 0.5*tile_size)); // distance from center of first square
     var dy0 = (y - (puzzle_obj.y_offset + 0.5*tile_size));
@@ -1244,9 +1256,12 @@ function handle_canvas_click(event, canvas, puzzle_obj, is_rightclick){
     console.log("event type: " + event.type);
     console.log('btn', event.button);
     if(is_rightclick){
+	console.log("XXX");
 	puzzle_obj.hide_box_text(ix, iy);
 	puzzle_obj.show_box_number(ix, iy);
+
 	puzzle_obj.update_score();
+	console.log("YYY after update_score in  handle_canvas_click");
     }else{
 	if(puzzle_obj.box_text_shown(ix, iy) != 'answer_number'){ // if click on anything besides answer_number, show input box:
 	puzzle_obj.input_box_number(ix, iy);
